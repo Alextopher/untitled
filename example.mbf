@@ -1,0 +1,6 @@
+BYTE a, b = 50, 2
+
+while a != 0 {
+    a -= &b
+    .a
+}
