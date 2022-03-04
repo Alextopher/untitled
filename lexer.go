@@ -22,7 +22,8 @@ const eof = -1
 const (
 	symbols    = "+-*/%<>=!&|^`~[]{}.,;:?()'\""
 	digits     = "0123456789"
-	whitespace = " \t\r\n"
+	whitespace = " \t"
+	newlines   = "\r\n" // new line characters
 )
 
 /* -- Detector functions for character groups -- */
@@ -42,9 +43,14 @@ func isWhiteSpace(r rune) bool {
 	return strings.IndexRune(whitespace, r) >= 0
 }
 
+// Detects if a run could be a part of a newline
+func isNewLine(r rune) bool {
+	return strings.IndexRune(newlines, r) >= 0
+}
+
 // Detects is a rune can be part of an identifier
 func isIdentRune(r rune) bool {
-	return !isWhiteSpace(r) && !isSymbol(r)
+	return !isWhiteSpace(r) && !isSymbol(r) && !isNewLine(r)
 }
 
 func lex(input string) *lexer {
@@ -152,6 +158,14 @@ func (l *lexer) acceptFuncRun(f func(r rune) bool) {
 }
 
 /* -- state functions -- */
+/*
+	        v----------------------\
+	(lexStart) <-> (lexOp) <-> (lexBrainfuck) <-> (lexBFIndentifier)
+	  ^ ^ ^ ^----> (lexNumber)
+      | |  \-----> (lexWhiteSpace)
+	  | \--------> (lexText)
+	  \----------> (lexNewLine)
+*/
 
 // lex is the entry point for lexer and starts the state machine
 func lexStart(l *lexer) stateFn {
@@ -163,6 +177,8 @@ func lexStart(l *lexer) stateFn {
 		return lexNumber
 	} else if isSymbol(r) {
 		return lexOp
+	} else if r == '\n' || r == '\r' {
+		return lexNewLine
 	} else if r == eof {
 		l.emit(itemEOF)
 		return nil
@@ -171,11 +187,26 @@ func lexStart(l *lexer) stateFn {
 	}
 }
 
-// lexWhitespace consumes all contiguous whitespace and acts as the start state
+// lexWhitespace consumes all contiguous whitespace
 func lexWhiteSpace(l *lexer) stateFn {
 	l.acceptRun(whitespace)
 	l.ignore()
 	return lexStart
+}
+
+// lexNewLine consumes a new either a "\n" or "\r\n"
+func lexNewLine(l *lexer) stateFn {
+	if l.accept("\n") {
+		l.emit(itemNewLine)
+		return lexStart
+	}
+
+	if l.accept("\r") && l.accept("\n") {
+		l.emit(itemNewLine)
+		return lexStart
+	}
+
+	return l.errorf("unexpected character during newline %q", l.input[l.start:l.pos])
 }
 
 // lexNumber consumes a number it's not up to the lexer to validate the number
@@ -190,6 +221,7 @@ func lexNumber(l *lexer) stateFn {
 	// we do not accept floating point numbers
 	if l.peek() == '.' {
 		// be nice and finish reading the number after the decimal point
+		l.next()
 		l.acceptRun(digits)
 		return l.errorf("floating points not supported: %q", l.input[l.start:l.pos])
 	}

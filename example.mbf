@@ -1,4 +1,4 @@
-BYTE a, b = 50, 2
+BYTE a, b = 50, 0x02
 
 while a != 0 {
     a -= &b

@@ -12,6 +12,7 @@ const (
 	itemNumber     // number (could be hex or decimal)
 	itemChar       // char (single character)
 
+	itemNewLine    // \n
 	itemLeftBrace  // {
 	itemRightBrace // }
 	itemComma      // ,
