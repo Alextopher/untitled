@@ -1,6 +1,62 @@
-BYTE a, b = 50, 0x02
+// read a byte from stdin
+BYTE Scan() {
+    ``
+    This is a brainfuck block and these comments are allowed
+    BF blocks should always leave the data pointer where they found it
+    The compiler figures out the correct amount of shift lefts and rights
+    And adds those instructions when the function returns
 
-while a != 0 {
-    a -= &b
-    .a
+    >,<
+    ``
+
+    // so the final code gen for this function will look like `>,<>`
+    // because a BYTE is 1 cell (who knew 1 byte is 1 byte!)
+    // this uglyness gets cleaned up in a gode golfing layer
+}
+
+// prints a byte to stdout
+void Print(rhs BYTE) {
+    // data pointer begins at rhs (the last thing declared)
+    ``
+    .
+    ``
+    // data pointer ends with rhs :)
+}
+
+// += without conserving rhs
+void AddEq(lhs BYTE, rhs BYTE) {
+    // DP begins at rhs (the last thing declared)
+    ``
+    this is a key idea for the language somehow the compiler will be able to determine
+    how many left and right shifts are needed to make this next line work
+    [(lhs)+(rhs)-]
+    ``
+    // DP ends with rhs
+}
+
+// += which conserves rhs by using a temp variable
+void AddEq(lhs BYTE, rhs &BYTE) {
+    BYTE tmp // <- DP now here
+    ``
+    [(lhs)+(tmp)+(rhs)-]    add rhs to lhs and tmp
+    [(rhs)+(tmp)-]          move tmp to rhs
+    ``
+    // The compiler adds a [-](rhs) to zero out tmp and move back where the DP started
+}
+
+void main() {
+    // shorthand for BYTE a = BYTE::Scan()
+    BYTE a = ,
+    BYTE b = 0x1 // same as BYTE b = 255 but hex is cooler
+
+    // Control flow is handled by the compiler I'll go into boolean logic some other time
+    while a != 0 {
+        // short hand for BYTE::Print(a)
+        .a
+        a += &b
+
+        // a += b would fail to compile because b 
+    }
+
+    // prints a...255
 }

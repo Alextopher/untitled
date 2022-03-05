@@ -20,10 +20,10 @@ type lexer struct {
 
 const eof = -1
 const (
-	symbols    = "+-*/%<>=!&|^`~[]{}.,;:?()'\""
+	symbols    = "+-*%<>=!&|^`~[]{}.,:?()'\""
 	digits     = "0123456789"
 	whitespace = " \t"
-	newlines   = "\r\n" // new line characters
+	newlines   = "\n;" // new line characters
 )
 
 /* -- Detector functions for character groups -- */
@@ -119,6 +119,8 @@ func (l *lexer) peek() rune {
 	return r
 }
 
+/* -- Accepting functions -- */
+
 // accept consumes the next rune if it's from the valid set
 func (l *lexer) accept(valid string) bool {
 	if strings.IndexRune(valid, l.next()) >= 0 {
@@ -159,12 +161,14 @@ func (l *lexer) acceptFuncRun(f func(r rune) bool) {
 
 /* -- state functions -- */
 /*
-	        v----------------------\
+	v---------------------------|
 	(lexStart) <-> (lexOp) <-> (lexBrainfuck) <-> (lexBFIndentifier)
-	  ^ ^ ^ ^----> (lexNumber)
-      | |  \-----> (lexWhiteSpace)
-	  | \--------> (lexText)
-	  \----------> (lexNewLine)
+	^
+	|-> (lexNumber)
+    |-> (lexWhiteSpace)
+	|-> (lexText)
+	|-> (lexNewLine)
+	|-> (lexComment)
 */
 
 // lex is the entry point for lexer and starts the state machine
@@ -177,8 +181,10 @@ func lexStart(l *lexer) stateFn {
 		return lexNumber
 	} else if isSymbol(r) {
 		return lexOp
-	} else if r == '\n' || r == '\r' {
+	} else if isNewLine(r) {
 		return lexNewLine
+	} else if r == '/' {
+		return lexComment
 	} else if r == eof {
 		l.emit(itemEOF)
 		return nil
@@ -194,19 +200,38 @@ func lexWhiteSpace(l *lexer) stateFn {
 	return lexStart
 }
 
-// lexNewLine consumes a new either a "\n" or "\r\n"
+// lexNewLine consumes a '\n' or ';'
 func lexNewLine(l *lexer) stateFn {
-	if l.accept("\n") {
+	if l.accept("\n") || l.accept(";") {
 		l.emit(itemNewLine)
 		return lexStart
 	}
 
-	if l.accept("\r") && l.accept("\n") {
-		l.emit(itemNewLine)
-		return lexStart
+	return l.errorf("unexpected character %q", l.next())
+}
+
+// lexComment consumes a comment
+func lexComment(l *lexer) stateFn {
+	// consume the '/'
+	l.next()
+
+	// on a // read until the end of the line
+	if l.accept("/") {
+		l.acceptUntil("\n")
+		l.ignore()
 	}
 
-	return l.errorf("unexpected character during newline %q", l.input[l.start:l.pos])
+	// on a /* read until the */
+	if l.accept("*") {
+		for {
+			l.acceptUntil("*")
+			if l.accept("/") {
+				break
+			}
+		}
+	}
+
+	return lexStart
 }
 
 // lexNumber consumes a number it's not up to the lexer to validate the number
@@ -333,12 +358,12 @@ func lexOp(l *lexer) stateFn {
 			l.errorf("invalid character constant: %q", l.input[l.start:l.pos])
 		}
 	case '`':
-		// require two more "`"s to enter brainfuck mode
-		if l.accept("`") && l.accept("`") {
+		// require another more "`" to enter brainfuck mode
+		if l.accept("`") {
 			l.emit(itemBF)
 			return lexBrainfuck
 		} else {
-			l.errorf("failed to enter brainfuck mode: %q.\nopen a BF block with ```", l.input[l.start:l.pos])
+			l.errorf("failed to enter brainfuck mode: %q.\nopen a BF block with ``", l.input[l.start:l.pos])
 		}
 	default:
 		l.errorf("invalid operator: %q", l.input[l.start:l.pos])
@@ -366,8 +391,6 @@ func lexText(l *lexer) stateFn {
 		l.emit(itemBreak)
 	case "continue":
 		l.emit(itemContinue)
-	case "const":
-		l.emit(itemConst)
 	case "type":
 		l.emit(itemTyp)
 	default:
@@ -404,16 +427,18 @@ func lexBrainfuck(l *lexer) stateFn {
 	case ')':
 		return l.errorf("unmatched ')'")
 	case '`':
-		// require two more "`"s to exit brainfuck mode
-		if l.accept("`") && l.accept("`") {
+		// require another "`" to exit brainfuck mode
+		if l.accept("`") {
+			l.emit(itemBF)
 			return lexStart
-		} else {
-			return l.errorf("failed to exit brainfuck mode: %q.\nclose a BF block with ```", l.input[l.start:l.pos])
 		}
+
+		return l.errorf("failed to exit brainfuck mode: %q.\nclose a BF block with ``", l.input[l.start:l.pos])
 	case eof:
-		return l.errorf("unmatched \"```\"")
+		return l.errorf("unmatched \"``\"")
 	default:
 		// everything else in brainfuck is a comment, do nothing
+		l.ignore()
 	}
 
 	return lexBrainfuck
@@ -442,6 +467,7 @@ func lexBFIndentifier(l *lexer) stateFn {
 	if !l.accept(")") {
 		return l.errorf("expected ) to close identifier")
 	}
+	l.ignore()
 
 	return lexBrainfuck
 }

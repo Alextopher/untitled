@@ -5,3 +5,9 @@ This is a small toy programming language I'm writing that targets brainfuck. WIP
 ## Lexer
 
 I followed rob pike's video on writing a lexer in Go https://www.youtube.com/watch?v=HxaD_trXwRE
+
+## Grammar
+
+```
+
+```

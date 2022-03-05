@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type itemType int
 
 const (
@@ -26,7 +28,6 @@ const (
 	itemReturn   // "return"
 	itemBreak    // "break"
 	itemContinue // "continue"
-	itemConst    // "const"
 	itemTyp      // "type"
 
 	// Brainfuck operators
@@ -78,10 +79,5 @@ func (i item) String() string {
 		return "EOF"
 	}
 
-	// long strings will be truncated
-	if len(i.val) > 10 {
-		return "[" + i.val[:10] + "..." + "]"
-	}
-
-	return "[" + i.val + "]"
+	return fmt.Sprintf("[%q]", i.val)
 }

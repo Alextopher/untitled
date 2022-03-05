@@ -21,10 +21,6 @@ func main() {
 	l := lex(string(bytes))
 
 	for item := range l.items {
-		if item.typ == itemNewLine {
-			fmt.Println()
-		} else {
-			fmt.Print(item)
-		}
+		fmt.Print(item)
 	}
 }
