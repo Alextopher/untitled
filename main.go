@@ -20,7 +20,22 @@ func main() {
 
 	l := lex(string(bytes))
 
+	// Keep track if we just printed a newline
+	var lastNewLine bool
+
 	for item := range l.items {
+		if lastNewLine {
+			if item.typ == itemNewLine {
+				continue
+			} else {
+				lastNewLine = false
+			}
+		}
+
+		if item.typ == itemNewLine {
+			lastNewLine = true
+		}
+
 		fmt.Print(item)
 	}
 }

@@ -1,5 +1,5 @@
 // read a byte from stdin
-BYTE Scan() {
+func Scan() byte {
     ``
     This is a brainfuck block and these comments are allowed
     BF blocks should always leave the data pointer where they found it
@@ -10,12 +10,12 @@ BYTE Scan() {
     ``
 
     // so the final code gen for this function will look like `>,<>`
-    // because a BYTE is 1 cell (who knew 1 byte is 1 byte!)
+    // because a byte is 1 cell (who knew 1 byte is 1 byte!)
     // this uglyness gets cleaned up in a gode golfing layer
 }
 
 // prints a byte to stdout
-void Print(rhs BYTE) {
+func Print(rhs byte) void {
     // data pointer begins at rhs (the last thing declared)
     ``
     .
@@ -24,7 +24,7 @@ void Print(rhs BYTE) {
 }
 
 // += without conserving rhs
-void AddEq(lhs BYTE, rhs BYTE) {
+func AddEq(lhs byte, rhs byte) void {
     // DP begins at rhs (the last thing declared)
     ``
     this is a key idea for the language somehow the compiler will be able to determine
@@ -35,8 +35,8 @@ void AddEq(lhs BYTE, rhs BYTE) {
 }
 
 // += which conserves rhs by using a temp variable
-void AddEq(lhs BYTE, rhs &BYTE) {
-    BYTE tmp // <- DP now here
+func AddEq(lhs byte, rhs &byte) void {
+    byte tmp // <- DP now here
     ``
     [(lhs)+(tmp)+(rhs)-]    add rhs to lhs and tmp
     [(rhs)+(tmp)-]          move tmp to rhs
@@ -44,16 +44,14 @@ void AddEq(lhs BYTE, rhs &BYTE) {
     // The compiler adds a [-](rhs) to zero out tmp and move back where the DP started
 }
 
-void main() {
-    // shorthand for BYTE a = BYTE::Scan()
-    BYTE a = ,
-    BYTE b = 0x1 // same as BYTE b = 255 but hex is cooler
+func main() {
+    byte a = Scan();
+    byte b = 0x1; // same as byte b = 255 but hex is cooler
 
     // Control flow is handled by the compiler I'll go into boolean logic some other time
-    while a != 0 {
-        // short hand for BYTE::Print(a)
-        .a
-        a += &b
+    while (a != 0) {
+        Print(a);
+        a += &b;
 
         // a += b would fail to compile because b 
     }

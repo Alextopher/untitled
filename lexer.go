@@ -23,7 +23,7 @@ const (
 	symbols    = "+-*%<>=!&|^`~[]{}.,:?()'\""
 	digits     = "0123456789"
 	whitespace = " \t"
-	newlines   = "\n;" // new line characters
+	newlines   = "\n"
 )
 
 /* -- Detector functions for character groups -- */
@@ -196,13 +196,13 @@ func lexStart(l *lexer) stateFn {
 // lexWhitespace consumes all contiguous whitespace
 func lexWhiteSpace(l *lexer) stateFn {
 	l.acceptRun(whitespace)
-	l.ignore()
+	l.emit(itemWhiteSpace)
 	return lexStart
 }
 
 // lexNewLine consumes a '\n' or ';'
 func lexNewLine(l *lexer) stateFn {
-	if l.accept("\n") || l.accept(";") {
+	if l.accept("\n") {
 		l.emit(itemNewLine)
 		return lexStart
 	}
@@ -362,9 +362,9 @@ func lexOp(l *lexer) stateFn {
 		if l.accept("`") {
 			l.emit(itemBF)
 			return lexBrainfuck
-		} else {
-			l.errorf("failed to enter brainfuck mode: %q.\nopen a BF block with ``", l.input[l.start:l.pos])
 		}
+
+		l.errorf("failed to enter brainfuck mode: %q.\nopen a BF block with ``", l.input[l.start:l.pos])
 	default:
 		l.errorf("invalid operator: %q", l.input[l.start:l.pos])
 	}
@@ -383,7 +383,7 @@ func lexText(l *lexer) stateFn {
 		l.emit(itemIf)
 	case "while":
 		l.emit(itemWhile)
-	case "function":
+	case "func":
 		l.emit(itemFunction)
 	case "return":
 		l.emit(itemReturn)
