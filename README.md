@@ -6,29 +6,6 @@ This is a small toy programming language I'm writing that targets brainfuck. WIP
 
 I followed rob pike's video on writing a lexer in Go https://www.youtube.com/watch?v=HxaD_trXwRE
 
-## Grammar
-
-```
-program -> function | function program
-function -> "func" identifier "(" parameters ")" type block
-parameters -> parameter | parameter "," parameters | ""
-parameter -> identifier type
-type -> "byte" | "void"
-block -> "{" statements "}"
-statements -> statement | statement statements | ""
-statement -> declaration | assignment | expression ";" | bf | ";"
-declaration -> type identifier ";" | type identifier "=" expression ";"
-assignment -> identifier ASSIGNOP expression ";"
-expression -> simple_expression | simple_expression RELOP simple_expression
-simple_expression -> term | simple_expression ADDOP term
-term -> factor | term MULOP factor
-factor -> identifier | identifier (expression_list) | number | "(" expression ")"
-expression_list -> expression | expression "," expression_list | ""
-bf -> "``" bf_body "``"
-bf_body -> bf_command | bf_command bf_body
-bf_command -> "+" | "-" | "." | "," | "[" | "]" | ">" | "<" | ">" | "(" identifier ")"
-```
-
 ## List of overloadable operators
 
 ```

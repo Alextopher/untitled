@@ -1,0 +1,46 @@
+program -> functions EOF
+
+functions -> function functions
+	| e
+
+function -> "func" ID "(" params ")" type block
+
+params -> param "," params
+	| e
+
+block -> "{" statements "}"
+
+statements -> statement statements
+	| e
+
+statement -> expression ";"
+	| declaration ";"
+	| "``" bf_block "``"
+
+declaration -> type ID "=" expression
+	| type ID
+
+expression -> simple_expression
+	| simple_expression RELOP expression
+
+simple_expression -> term
+	| sign term
+	| simple_expression ADDOP term
+
+sign -> "+" | "-"
+
+term -> factor
+	| term MULOP factor
+
+factor -> ID
+	| NUM
+	| ID "(" expression_list ")"
+	| "(" expression ")"
+
+expression_list -> expression expression_list
+	| e
+
+bf_block -> bf_command bf_block
+	| e
+
+bf_command -> "+" | "-" | ">" | "<" | "." | "," | "[" | "]" | "(" ID ")"
